@@ -14,7 +14,7 @@ parser = argparse.ArgumentParser(description='Conformalize Torchvision Model on 
 parser.add_argument('data', metavar='IMAGENETVALDIR', help='path to Imagenet Val')
 parser.add_argument('--batch_size', metavar='BSZ', help='batch size', default=128)
 parser.add_argument('--num_workers', metavar='NW', help='number of workers', default=0)
-parser.add_argument('--num_calib', metavar='NCALIB', help='number of calibration points', default=10000)
+parser.add_argument('--num_calib', metavar='NCALIB', help='number of calibration points', default=5000)
 parser.add_argument('--seed', metavar='SEED', help='random seed', default=0)
 
 if __name__ == "__main__":
@@ -44,7 +44,7 @@ if __name__ == "__main__":
     cudnn.benchmark = True
 
     # Get the model 
-    model = torchvision.models.resnet152(pretrained=True,progress=True).cuda()
+    model = torchvision.models.resnet18(weights='IMAGENET1K_V1', progress=True).cuda()
     model = torch.nn.DataParallel(model) 
     model.eval()
 
@@ -54,9 +54,12 @@ if __name__ == "__main__":
     allow_zero_sets = False 
     # use the randomized version of conformal
     randomized = True 
+    # regularization term
+    lamda = None
+    kreg = None
 
     # Conformalize model
-    model = ConformalModel(model, calib_loader, alpha=0.1, lamda=0, randomized=randomized, allow_zero_sets=allow_zero_sets)
+    model = ConformalModel(model, calib_loader, alpha=0.1, randomized=randomized, allow_zero_sets=allow_zero_sets, lamda_criterion=lamda_criterion)
 
     print("Model calibrated and conformalized! Now evaluate over remaining data.")
     validate(val_loader, model, print_bool=True)
